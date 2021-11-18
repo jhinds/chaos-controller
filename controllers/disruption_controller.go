@@ -103,7 +103,7 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	// because the logger instance is pointer, concurrent reconciling would create a race condition
 	// where the logger context would change for all ongoing reconcile loops
 	// in the case we enable concurrent reconciling, we should create one logger instance per reconciling call
-	r.log = r.BaseLog.With("instance", req.Name, "namespace", req.Namespace)
+	r.log = r.BaseLog.With("instance", req.Name, "namespace", req.Namespace, "span", span)
 
 	// reconcile metrics
 	r.handleMetricSinkError(r.MetricsSink.MetricReconcile())
