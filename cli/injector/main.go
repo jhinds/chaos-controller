@@ -271,7 +271,7 @@ func injectAndWait(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	log.Info("injecting the disruption")
+	log.Infow("injecting the disruption", "kind", cmd.Name())
 
 	errOnInject := false
 

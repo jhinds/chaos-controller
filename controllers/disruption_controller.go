@@ -117,6 +117,7 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 	}()()
 
 	// fetch the instance
+	// TODO remove with tracing
 	r.log.Infow("fetching disruption instance")
 
 	if err := r.Get(context.Background(), req.NamespacedName, instance); err != nil {
@@ -153,7 +154,7 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 
 			// we reach this code when all the cleanup pods have succeeded
 			// we can remove the finalizer and let the resource being garbage collected
-			r.log.Infow("removing finalizer")
+			r.log.Infow("all chaos pods are cleaned up; removing disruption finalizer")
 			controllerutil.RemoveFinalizer(instance, disruptionFinalizer)
 
 			if err := r.Update(context.Background(), instance); err != nil {
@@ -212,13 +213,13 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("error updating disruption injection status: %w", err)
 		} else if !injected {
-			r.log.Infow("disruption is not fully injected yet, requeuing")
+			r.log.Infow("disruption is not fully injected yet, requeuing", "injectionStatus", instance.Status.InjectionStatus)
 			return ctrl.Result{Requeue: true}, nil
 		}
 
 		requeueDelay := time.Duration(math.Max(float64(calculateRemainingDurationSeconds(*instance)), r.ExpiredDisruptionGCDelay.Seconds())) * time.Second
 
-		r.log.Infow("requeuing disruption", "requeueDelay", requeueDelay.String())
+		r.log.Infow("requeuing disruption to check for its expiration", "requeueDelay", requeueDelay.String())
 
 		return ctrl.Result{
 				Requeue:      true,
@@ -236,7 +237,7 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 // - an instance with at least one chaos pod as "ready" is considered as "partially injected"
 // - an instance with no ready chaos pods is considered as "not injected"
 func (r *DisruptionReconciler) updateInjectionStatus(instance *chaosv1beta1.Disruption) (bool, error) {
-	r.log.Infow("updating injection status")
+	r.log.Infow("checking if injection status needs updated", "injectionStatus", instance.Status.InjectionStatus)
 
 	status := chaostypes.DisruptionInjectionStatusNotInjected
 	allReady := true
@@ -579,7 +580,7 @@ func (r *DisruptionReconciler) ignoreTarget(instance *chaosv1beta1.Disruption, t
 // selectTargets will select min(count, all matching targets) random targets (pods or nodes depending on the disruption level)
 // from the targets matching the instance label selector
 // targets will only be selected once per instance
-// the chosen targets names will be reflected in the intance status
+// the chosen targets names will be reflected in the instance status
 // subsequent calls to this function will always return the same targets as the first call
 func (r *DisruptionReconciler) selectTargets(instance *chaosv1beta1.Disruption) error {
 	matchingTargets := []string{}
@@ -591,7 +592,7 @@ func (r *DisruptionReconciler) selectTargets(instance *chaosv1beta1.Disruption) 
 
 	r.log.Infow("selecting targets to inject disruption to", "selector", instance.Spec.Selector.String())
 
-	// validate the given label selector to avoid any formating issues due to special chars
+	// validate the given label selector to avoid any formatting issues due to special chars
 	if instance.Spec.Selector != nil {
 		if err := validateLabelSelector(instance.Spec.Selector.AsSelector()); err != nil {
 			r.Recorder.Event(instance, corev1.EventTypeWarning, "InvalidLabelSelector", fmt.Sprintf("%s. No targets will be selected.", err.Error()))
@@ -624,7 +625,7 @@ func (r *DisruptionReconciler) selectTargets(instance *chaosv1beta1.Disruption) 
 
 	// return an error if the selector returned no targets
 	if len(matchingTargets) == 0 {
-		r.log.Info("the given label selector did not return any targets, skipping")
+		r.log.Infow("the given label selector did not return any targets, skipping", "selector", instance.Spec.Selector)
 		r.Recorder.Event(instance, corev1.EventTypeWarning, "NoTarget", "The given label selector did not return any targets. Please ensure that both the selector and the count are correct (should be either a percentage or an integer greater than 0).")
 
 		return nil
