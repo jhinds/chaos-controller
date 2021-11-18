@@ -49,6 +49,7 @@ import (
 	"github.com/DataDog/chaos-controller/metrics"
 	"github.com/DataDog/chaos-controller/targetselector"
 	chaostypes "github.com/DataDog/chaos-controller/types"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 const (
@@ -90,6 +91,8 @@ type DisruptionReconciler struct {
 
 // Reconcile loop
 func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	span := tracer.StartSpan("reconcile")
+	defer span.Finish()
 	instance := &chaosv1beta1.Disruption{}
 	tsStart := time.Now()
 

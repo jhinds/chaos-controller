@@ -35,6 +35,10 @@ var (
 	DefaultAggregationFlushInterval = 3 * time.Second
 	// DefaultAggregation
 	DefaultAggregation = false
+	// DefaultExtendedAggregation
+	DefaultExtendedAggregation = false
+	// DefaultDevMode
+	DefaultDevMode = false
 )
 
 // Options contains the configuration options for a client.
@@ -93,10 +97,18 @@ type Options struct {
 	ChannelModeBufferSize int
 	// AggregationFlushInterval is the interval for the aggregator to flush metrics
 	AggregationFlushInterval time.Duration
-	// [beta] Aggregation enables/disables client side aggregation
+	// [beta] Aggregation enables/disables client side aggregation for
+	// Gauges, Counts and Sets (compatible with every Agent's version).
 	Aggregation bool
+	// [beta] Extended aggregation enables/disables client side aggregation
+	// for all types. This feature is only compatible with Agent's versions
+	// >=7.25.0 or Agent's version >=6.25.0 && < 7.0.0.
+	ExtendedAggregation bool
 	// TelemetryAddr specify a different endpoint for telemetry metrics.
 	TelemetryAddr string
+	// DevMode enables the "dev" mode where the client sends much more
+	// telemetry metrics to help troubleshooting the client behavior.
+	DevMode bool
 }
 
 func resolveOptions(options []Option) (*Options, error) {
@@ -115,6 +127,8 @@ func resolveOptions(options []Option) (*Options, error) {
 		ChannelModeBufferSize:    DefaultChannelModeBufferSize,
 		AggregationFlushInterval: DefaultAggregationFlushInterval,
 		Aggregation:              DefaultAggregation,
+		ExtendedAggregation:      DefaultExtendedAggregation,
+		DevMode:                  DefaultDevMode,
 	}
 
 	for _, option := range options {
@@ -246,7 +260,8 @@ func WithAggregationInterval(interval time.Duration) Option {
 	}
 }
 
-// WithClientSideAggregation enables client side aggregation. Client side aggregation is a beta feature.
+// WithClientSideAggregation enables client side aggregation for Gauges, Counts
+// and Sets. Client side aggregation is a beta feature.
 func WithClientSideAggregation() Option {
 	return func(o *Options) error {
 		o.Aggregation = true
@@ -258,6 +273,19 @@ func WithClientSideAggregation() Option {
 func WithoutClientSideAggregation() Option {
 	return func(o *Options) error {
 		o.Aggregation = false
+		o.ExtendedAggregation = false
+		return nil
+	}
+}
+
+// WithExtendedClientSideAggregation enables client side aggregation for all
+// types. This feature is only compatible with Agent's version >=6.25.0 &&
+// <7.0.0 or Agent's versions >=7.25.0. Client side aggregation is a beta
+// feature.
+func WithExtendedClientSideAggregation() Option {
+	return func(o *Options) error {
+		o.Aggregation = true
+		o.ExtendedAggregation = true
 		return nil
 	}
 }
@@ -266,6 +294,24 @@ func WithoutClientSideAggregation() Option {
 func WithTelemetryAddr(addr string) Option {
 	return func(o *Options) error {
 		o.TelemetryAddr = addr
+		return nil
+	}
+}
+
+// WithDevMode enables client "dev" mode, sending more Telemetry metrics to
+// help troubleshoot client behavior.
+func WithDevMode() Option {
+	return func(o *Options) error {
+		o.DevMode = true
+		return nil
+	}
+}
+
+// WithoutDevMode disables client "dev" mode, sending more Telemetry metrics to
+// help troubleshoot client behavior.
+func WithoutDevMode() Option {
+	return func(o *Options) error {
+		o.DevMode = false
 		return nil
 	}
 }

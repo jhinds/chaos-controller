@@ -43,6 +43,7 @@ import (
 	"github.com/DataDog/chaos-controller/targetselector"
 	chaoswebhook "github.com/DataDog/chaos-controller/webhook"
 	"github.com/spf13/viper"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -261,6 +262,9 @@ func main() {
 			logger.Errorw("error closing metrics sink client", "sink", ms.GetSinkName(), "error", err)
 		}
 	}()
+
+	tracer.Start()
+	defer tracer.Stop()
 
 	// create reconciler
 	r := &controllers.DisruptionReconciler{

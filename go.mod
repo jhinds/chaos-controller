@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.12
-	github.com/DataDog/datadog-go v4.0.0+incompatible
+	github.com/DataDog/datadog-go v4.4.0+incompatible
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
 	github.com/Microsoft/hcsshim/test v0.0.0-20200818230740-94556e86d3db // indirect
 	github.com/avast/retry-go v2.6.0+incompatible
@@ -33,11 +33,13 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc95
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/slack-go/slack v0.9.5
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/vishvananda/netlink v1.1.0
 	github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae
 	go.etcd.io/bbolt v1.3.5 // indirect
@@ -47,6 +49,7 @@ require (
 	golang.org/x/text v0.3.6 // indirect
 	google.golang.org/grpc v1.39.0
 	google.golang.org/protobuf v1.27.1
+	gopkg.in/DataDog/dd-trace-go.v1 v1.34.0
 	gotest.tools/v3 v3.0.2 // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
