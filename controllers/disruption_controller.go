@@ -168,6 +168,10 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 			return ctrl.Result{}, nil
 		}
 	} else {
+		if err := r.validateDisruptionSpec(instance); err != nil {
+			return ctrl.Result{Requeue: false}, err
+		}
+
 		// the injection is being created or modified, apply needed actions
 		controllerutil.AddFinalizer(instance, disruptionFinalizer)
 
@@ -191,10 +195,6 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		if err := r.selectTargets(instance); err != nil {
 			r.log.Errorw("error selecting targets", "error", err)
 			return ctrl.Result{}, fmt.Errorf("error selecting targets: %w", err)
-		}
-
-		if err := r.validateDisruptionSpec(instance); err != nil {
-			return ctrl.Result{Requeue: false}, err
 		}
 
 		// start injections
