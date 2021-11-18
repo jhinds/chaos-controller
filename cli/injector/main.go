@@ -26,6 +26,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -91,6 +92,9 @@ func init() {
 	cobra.OnInitialize(initMetricsSink)
 	cobra.OnInitialize(initConfig)
 	cobra.OnInitialize(initExitSignalsHandler)
+
+	tracer.Start()
+	defer tracer.Stop()
 }
 
 func main() {
@@ -264,6 +268,9 @@ func initExitSignalsHandler() {
 // injectAndWait injects the disruption with the configured injector and waits
 // for an exit signal to be sent
 func injectAndWait(cmd *cobra.Command, args []string) {
+	span := tracer.StartSpan("inject")
+	defer span.Finish()
+
 	// early exit if an injector configuration failed to be generated during initialization
 	if !readyToInject {
 		log.Error("an injector could not be configured successfully during initialization, aborting the injection now")
@@ -327,7 +334,8 @@ func injectAndWait(cmd *cobra.Command, args []string) {
 
 // cleanAndExit cleans the disruption with the configured injector and exits nicely
 func cleanAndExit(cmd *cobra.Command, args []string) {
-	log.Info("cleaning the disruption")
+	span := tracer.StartSpan("clean")
+	defer span.Finish()
 
 	errs := []error{}
 
