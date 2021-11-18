@@ -738,8 +738,6 @@ func (r *DisruptionReconciler) getChaosPods(instance *chaosv1beta1.Disruption, l
 		ls[chaostypes.DisruptionNamespaceLabel] = instance.Namespace
 	}
 
-	r.log.Infow("searching for chaos pods with label selector...", "labels", ls.String())
-
 	// list pods in the defined namespace and for the given target
 	listOptions := &client.ListOptions{
 		Namespace:     r.InjectorServiceAccountNamespace,
@@ -750,6 +748,8 @@ func (r *DisruptionReconciler) getChaosPods(instance *chaosv1beta1.Disruption, l
 	if err != nil {
 		return nil, fmt.Errorf("error listing owned pods: %w", err)
 	}
+
+	r.log.Infow("searching for chaos pods with label selector...", "labels", ls.String(), "foundPods", pods)
 
 	return pods.Items, nil
 }
