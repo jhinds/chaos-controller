@@ -470,7 +470,7 @@ func (r *DisruptionReconciler) handleChaosPodsTermination(instance *chaosv1beta1
 			continue
 		}
 
-		// move chaos pods target to ignored targets so it is not reselected after
+		// move chaos pods target to ignored targets, so it is not reselected after
 		if err := r.ignoreTarget(instance, target); err != nil {
 			r.log.Errorw("error ignoring chaos pod target", "error", err, "target", target, "chaosPod", chaosPod.Name)
 
@@ -500,7 +500,7 @@ func (r *DisruptionReconciler) handleChaosPodsTermination(instance *chaosv1beta1
 		switch chaosPod.Status.Phase {
 		case corev1.PodSucceeded, corev1.PodPending:
 			// pod has terminated or is pending
-			// we can remove the pod and the finalizer and it'll be garbage collected
+			// we can remove the pod and the finalizer, so that it'll be garbage collected
 			removeFinalizer = true
 		case corev1.PodFailed:
 			// pod has failed
@@ -561,8 +561,6 @@ func (r *DisruptionReconciler) handleChaosPodsTermination(instance *chaosv1beta1
 // ignoreTarget moves the given target from the list of targets to the list of ignored targets
 // so it is not picked up during targets selection
 func (r *DisruptionReconciler) ignoreTarget(instance *chaosv1beta1.Disruption, target string) error {
-	r.log.Infow("adding the target to ignored targets", "target", target)
-
 	// remove target from targets list
 	for i, t := range instance.Status.Targets {
 		if t == target {
@@ -575,6 +573,7 @@ func (r *DisruptionReconciler) ignoreTarget(instance *chaosv1beta1.Disruption, t
 
 	// add target to ignored targets list
 	if !contains(instance.Status.IgnoredTargets, target) {
+		r.log.Infow("adding the target to ignored targets", "target", target)
 		instance.Status.IgnoredTargets = append(instance.Status.IgnoredTargets, target)
 	}
 
@@ -681,7 +680,7 @@ func (r *DisruptionReconciler) selectTargets(instance *chaosv1beta1.Disruption) 
 // getEligibleTargets returns targets which can be targeted by the given instance from the given targets pool
 // it skips ignored targets and targets being already targeted by another disruption
 func (r *DisruptionReconciler) getEligibleTargets(instance *chaosv1beta1.Disruption, targets []string) ([]string, error) {
-	r.log.Info("getting eligible targets for disruption injection")
+	r.log.Debug("getting eligible targets for disruption injection")
 
 	eligibleTargets := []string{}
 
