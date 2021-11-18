@@ -119,10 +119,6 @@ func (r *DisruptionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) 
 		}
 	}()()
 
-	// fetch the instance
-	// TODO remove with tracing
-	r.log.Infow("fetching disruption instance")
-
 	if err := r.Get(context.Background(), req.NamespacedName, instance); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/DataDog/chaos-controller/metrics"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -41,7 +42,8 @@ var _ webhook.Validator = &Disruption{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Disruption) ValidateCreate() error {
-	logger.Infow("validating created disruption", "instance", r.Name, "namespace", r.Namespace)
+	span := tracer.StartSpan("validate.create")
+	defer span.Finish()
 
 	// delete-only mode, reject everything trying to be created
 	if deleteOnly {
@@ -77,7 +79,8 @@ func (r *Disruption) ValidateCreate() error {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Disruption) ValidateUpdate(old runtime.Object) error {
-	logger.Infow("validating updated disruption", "instance", r.Name, "namespace", r.Namespace)
+	span := tracer.StartSpan("validate.update")
+	defer span.Finish()
 
 	// compare old and new disruption hashes and deny any spec changes
 	oldHash, err := old.(*Disruption).Spec.Hash()
@@ -90,9 +93,8 @@ func (r *Disruption) ValidateUpdate(old runtime.Object) error {
 		return fmt.Errorf("error getting new disruption hash: %w", err)
 	}
 
-	logger.Infow("comparing disruption spec hashes", "instance", r.Name, "namespace", r.Namespace, "oldHash", oldHash, "newHash", newHash)
-
 	if oldHash != newHash {
+		logger.Errorw("error when comparing disruption spec hashes", "instance", r.Name, "namespace", r.Namespace, "oldHash", oldHash, "newHash", newHash)
 		return fmt.Errorf("a disruption spec can't be edited, please delete and recreate it if needed")
 	}
 
